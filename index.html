@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>60s API 纯静态展示页面</title>
+  <title>60s 全接口纯静态展示页面</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .content-box {
@@ -17,20 +17,33 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+    .markdown-body h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 1rem 0;
+    }
+    .markdown-body br {
+      margin: 0.25rem 0;
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-4 md:p-8">
   <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 md:p-8">
-    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">60s API 纯静态展示</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">60s 全接口展示（60s 新闻优先）</h1>
 
     <div class="flex flex-col md:flex-row gap-4 mb-6">
       <div class="flex-1">
-        <label class="block text-sm font-medium text-gray-700 mb-1">选择内容</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">选择接口（60s 新闻优先）</label>
+        <!-- 下拉框：60s 新闻放在最前面，后续是所有核心接口 -->
         <select id="data-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="60s">60s 早报/新闻（核心）</option>
           <option value="weibo">微博热搜</option>
           <option value="zhihu">知乎热搜</option>
           <option value="epic">Epic 免费游戏</option>
+          <option value="quark">夸克热点</option>
           <option value="maoyan">猫眼实时票房</option>
+          <option value="weather">全国城市天气（模拟）</option>
+          <option value="tech">科技资讯（模拟）</option>
         </select>
       </div>
 
@@ -48,7 +61,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
           </svg>
-          加载内容
+          加载接口内容
         </button>
       </div>
     </div>
@@ -64,41 +77,93 @@
   </div>
 
   <script>
-    // 内置模拟数据（无后端依赖，直接调用）
+    // 内置：60s 所有核心接口的模拟数据（60s 新闻放在首位，数据贴合真实返回格式）
     const mockData = {
-      weibo: {
+      // 1. 60s 早报/新闻（核心接口，放在最前面）
+      "60s": {
         code: 200,
         updateTime: new Date().toLocaleString(),
         data: [
-          { rank: 1, title: '微博热搜：某某明星新剧开播', hotValue: '120万+' },
-          { rank: 2, title: '微博热搜：全国多地气温骤降', hotValue: '98万+' },
-          { rank: 3, title: '微博热搜：某赛事中国队夺冠', hotValue: '86万+' }
+          { id: 1, content: '国内新闻：某某重要会议顺利召开，部署后续民生工作' },
+          { id: 2, content: '国际新闻：某国达成重要合作协议，推动区域经济发展' },
+          { id: 3, content: '科技新闻：某企业发布新一代人工智能产品，性能提升50%' },
+          { id: 4, content: '民生新闻：全国多地优化医保报销政策，惠及千万群众' },
+          { id: 5, content: '体育新闻：某赛事中国队斩获3枚金牌，创历史最佳成绩' },
+          { id: 6, content: '天气提示：未来3天北方有寒潮，南方有小雨，注意防范' }
         ]
       },
-      zhihu: {
+      // 2. 微博热搜
+      "weibo": {
         code: 200,
         updateTime: new Date().toLocaleString(),
         data: [
-          { rank: 1, title: '知乎热搜：如何评价某某科技新品？', commentCount: '1.5万' },
-          { rank: 2, title: '知乎热搜：普通人如何提升理财能力？', commentCount: '9800' },
-          { rank: 3, title: '知乎热搜：当下职场内卷的本质是什么？', commentCount: '7600' }
+          { rank: 1, title: '微博热搜：某某明星新剧开播口碑爆棚', hotValue: '120万+' },
+          { rank: 2, title: '微博热搜：全国多地气温骤降，注意添衣保暖', hotValue: '98万+' },
+          { rank: 3, title: '微博热搜：某赛事中国队夺冠，全网沸腾', hotValue: '86万+' },
+          { rank: 4, title: '微博热搜：某某网红公益项目落地，帮助百名留守儿童', hotValue: '72万+' }
         ]
       },
-      epic: {
+      // 3. 知乎热搜
+      "zhihu": {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { rank: 1, title: '知乎热搜：如何评价某某科技新品的创新点？', commentCount: '1.5万' },
+          { rank: 2, title: '知乎热搜：普通人如何低成本提升自身核心竞争力？', commentCount: '9800' },
+          { rank: 3, title: '知乎热搜：当下职场内卷的本质和破解方法是什么？', commentCount: '7600' },
+          { rank: 4, title: '知乎热搜：养宠物对人的心理健康有哪些积极影响？', commentCount: '6300' }
+        ]
+      },
+      // 4. Epic 免费游戏
+      "epic": {
         code: 200,
         updateTime: new Date().toLocaleString(),
         data: [
           { name: '《模拟农场2024》', status: '当前免费', endTime: '2026-02-15' },
-          { name: '《独立游戏合集》', status: '即将免费', startTime: '2026-02-16' }
+          { name: '《独立游戏合集：冒险篇》', status: '即将免费', startTime: '2026-02-16' },
+          { name: '《策略战争：新纪元》', status: '已结束免费', startTime: '2026-02-01' }
         ]
       },
-      maoyan: {
+      // 5. 夸克热点
+      "quark": {
         code: 200,
         updateTime: new Date().toLocaleString(),
         data: [
-          { rank: 1, movieName: '《某某大片》', boxOffice: '6.8亿' },
-          { rank: 2, movieName: '《温情治愈片》', boxOffice: '3.5亿' },
-          { rank: 3, movieName: '《悬疑推理片》', boxOffice: '2.1亿' }
+          { rank: 1, title: '夸克热点：某某景区推出新玩法，春节客流量预计翻倍' },
+          { rank: 2, title: '夸克热点：某品牌发布新款手机，续航能力提升30%' },
+          { rank: 3, title: '夸克热点：冬季养生小贴士，远离呼吸道疾病' }
+        ]
+      },
+      // 6. 猫眼实时票房
+      "maoyan": {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { rank: 1, movieName: '《某某大片：终极对决》', boxOffice: '6.8亿' },
+          { rank: 2, movieName: '《温情治愈：岁月静好》', boxOffice: '3.5亿' },
+          { rank: 3, movieName: '《悬疑推理：消失的线索》', boxOffice: '2.1亿' },
+          { rank: 4, movieName: '《动画电影：萌宠大冒险》', boxOffice: '1.2亿' }
+        ]
+      },
+      // 7. 全国城市天气（模拟）
+      "weather": {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { city: '北京', weather: '晴转多云', temperature: '-5℃ ~ 6℃', wind: '北风3级' },
+          { city: '上海', weather: '小雨', temperature: '5℃ ~ 9℃', wind: '东风2级' },
+          { city: '广州', weather: '多云', temperature: '12℃ ~ 18℃', wind: '南风2级' },
+          { city: '深圳', weather: '晴', temperature: '14℃ ~ 20℃', wind: '东南风3级' }
+        ]
+      },
+      // 8. 科技资讯（模拟）
+      "tech": {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { id: 1, title: '某大厂发布新一代云服务器，算力提升40%，价格下降20%' },
+          { id: 2, title: '全球首款折叠屏平板正式开售，售价万元起，预约量突破10万台' },
+          { id: 3, title: '人工智能技术在医疗领域落地，辅助诊断准确率达99%' }
         ]
       }
     };
@@ -114,29 +179,32 @@
     refreshBtn.addEventListener('click', loadData);
     window.onload = loadData;
 
-    // 核心：加载并格式化数据（无任何后端请求）
+    // 核心：加载并格式化所有接口数据（无后端依赖，稳定运行）
     function loadData() {
       // 显示加载状态
       loading.classList.remove('hidden');
       loading.classList.add('flex');
       contentBox.innerHTML = '';
 
-      // 获取选择的内容和格式
+      // 获取选择的接口和展示格式
       const dataKey = dataSelect.value;
       const format = formatSelect.value;
       const data = mockData[dataKey];
 
-      // 模拟加载延迟（更真实）
+      // 模拟加载延迟（更贴近真实接口调用体验）
       setTimeout(() => {
         let content = '';
         switch (format) {
           case 'json':
+            // JSON 格式：格式化展示原始数据
             content = JSON.stringify(data, null, 2);
             contentBox.textContent = content;
             break;
           case 'text':
-            content = `更新时间：${data.updateTime}\n\n`;
-            data.data.forEach(item => {
+            // 纯文本格式：简洁易读
+            content = `接口更新时间：${data.updateTime}\n\n`;
+            content += `接口数据总量：${data.data.length} 条\n\n`;
+            data.data.forEach((item, index) => {
               for (const key in item) {
                 content += `${key}：${item[key]}  `;
               }
@@ -145,14 +213,15 @@
             contentBox.textContent = content;
             break;
           case 'markdown':
-            content = `# 数据展示（更新时间：${data.updateTime}）\n\n`;
-            content += '| 序号 | 核心内容 | 附加信息 |\n';
-            content += '| ---- | -------- | -------- |\n';
+            // Markdown 格式：美观排版
+            content = `# ${dataSelect.options[dataSelect.selectedIndex].text}（更新时间：${data.updateTime}）\n\n`;
+            content += `| 序号 | 核心内容 | 附加信息 |\n`;
+            content += `| ---- | -------- | -------- |\n`;
             data.data.forEach((item, index) => {
               const values = Object.values(item);
-              content += `| ${index+1} | ${values[1]} | ${values[2] || '无'} |\n`;
+              content += `| ${index+1} | ${values[1] || values[0]} | ${values[2] || '无'} |\n`;
             });
-            // 格式化 Markdown 展示
+            // 转换 Markdown 换行和表格，提升展示效果
             contentBox.innerHTML = `<div class="markdown-body">${content.replace(/\n/g, '<br>').replace(/\|/g, '<span class="px-2">|</span>').replace(/# /g, '<h2>').replace(/#/g, '</h2>')}</div>`;
             break;
         }
