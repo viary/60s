@@ -2,17 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "deno.ts",
-      "use": "@vercel/deno@^3.0.0",
-      "config": {
-        "denoVersion": "1.41.0"
-      }
+      "src": "server.js",
+      "use": "@vercel/node@20"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "deno.ts"
+      "dest": "server.js"
     }
   ]
 }
