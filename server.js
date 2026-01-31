@@ -1,4 +1,4 @@
-// 60s 项目 Node.js 适配入口，兼容 Vercel Serverless Function
+// 60s1 项目 Node.js 适配入口，兼容 Vercel Serverless Function
 const http = require('http');
 const { readFileSync } = require('fs');
 const { join } = require('path');
