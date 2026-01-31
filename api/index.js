@@ -1,5 +1,5 @@
-// 后端核心：请求第三方接口，解决跨域问题（Vercel 官方 Serverless 函数规范）
-const axios = require('axios');
+// 后端核心：ESM 格式（适配项目 "type": "module"），请求第三方接口解决跨域
+import axios from 'axios'; // ESM 导入语法（替换 CommonJS 的 require）
 
 // 配置：60s 全接口地址
 const API_CONFIG = {
@@ -17,8 +17,8 @@ const API_CONFIG = {
   "english": "https://api.vikiboss.com/v2/english"
 };
 
-// Vercel Serverless 函数入口（处理请求+响应）
-module.exports = async (req, res) => {
+// Vercel Serverless 函数入口：ESM 格式（export default 替换 CommonJS 的 module.exports）
+export default async (req, res) => {
   // 1. 允许跨域（关键：解决前端请求自己后端的跨域问题）
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
