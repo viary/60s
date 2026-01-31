@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>60s 全接口实时展示页面（无遗漏）</title>
+  <title>60s 全接口自部署展示（无跨域）</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .content-box {
@@ -26,12 +26,11 @@
 </head>
 <body class="bg-gray-100 min-h-screen p-4 md:p-8">
   <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 md:p-8">
-    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">60s 全接口实时展示（60s 新闻优先，无遗漏）</h1>
+    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">60s 全接口自部署展示（60s 新闻优先，无跨域）</h1>
 
     <div class="flex flex-col md:flex-row gap-4 mb-6">
       <div class="flex-1">
         <label class="block text-sm font-medium text-gray-700 mb-1">选择接口（全量覆盖，60s 新闻首位）</label>
-        <!-- 下拉框：包含 60s 原项目所有 12 个核心接口，60s 新闻放在最前面 -->
         <select id="data-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="60s">60s 早报/新闻（核心）</option>
           <option value="weibo">微博热搜</option>
@@ -78,22 +77,6 @@
   </div>
 
   <script>
-    // 配置：60s 原项目 ALL 12 个接口的实时公共 API 地址（无遗漏，稳定可用）
-    const API_CONFIG = {
-      "60s": "https://api.vikiboss.com/v2/60s", // 60s 早报/新闻（核心）
-      "weibo": "https://api.vikiboss.com/v2/weibo", // 微博热搜
-      "zhihu": "https://api.vikiboss.com/v2/zhihu", // 知乎热搜
-      "epic": "https://api.vikiboss.com/v2/epic", // Epic 免费游戏
-      "quark": "https://api.vikiboss.com/v2/quark", // 夸克热点
-      "maoyan": "https://api.vikiboss.com/v2/maoyan/movie", // 猫眼实时票房
-      "weather": "https://api.vikiboss.com/v2/weather?city=全国", // 全国城市天气
-      "tech": "https://api.vikiboss.com/v2/tech", // 科技资讯
-      "history": "https://api.vikiboss.com/v2/history", // 历史上的今天
-      "finance": "https://api.vikiboss.com/v2/finance", // 财经要闻
-      "movie": "https://api.vikiboss.com/v2/movie", // 影视热榜
-      "english": "https://api.vikiboss.com/v2/english" // 每日英语美句
-    };
-
     // DOM 元素
     const dataSelect = document.getElementById('data-select');
     const formatSelect = document.getElementById('format-select');
@@ -101,63 +84,54 @@
     const loading = document.getElementById('loading');
     const contentBox = document.getElementById('content');
 
-    // 绑定事件：刷新/页面加载都请求全接口实时数据
-    refreshBtn.addEventListener('click', fetchRealAllData);
-    window.onload = fetchRealAllData;
+    // 绑定事件
+    refreshBtn.addEventListener('click', fetchSelfDeployData);
+    window.onload = fetchSelfDeployData;
 
-    // 核心：请求「全接口实时公共 API」并展示内容（无遗漏，保持原有格式功能）
-    async function fetchRealAllData() {
-      // 显示加载状态
+    // 核心：请求「自己部署的后端接口」（无跨域，稳定可用）
+    async function fetchSelfDeployData() {
       loading.classList.remove('hidden');
       loading.classList.add('flex');
       contentBox.innerHTML = '';
 
       try {
-        // 获取选择的全接口和展示格式
         const dataKey = dataSelect.value;
         const format = formatSelect.value;
-        // 拼接对应接口的实时 API 请求地址（带格式参数）
-        const realApiUrl = `${API_CONFIG[dataKey]}?encoding=${format}`;
+        // 请求自己部署的 Vercel 后端（api 目录下的 index.js）
+        const selfDeployApiUrl = `/api?dataKey=${dataKey}&format=${format}`;
 
-        // 请求全接口实时公共 API（处理跨域，确保 Vercel 稳定访问）
-        const response = await fetch(realApiUrl, {
+        // 前端只请求自己的后端，无跨域限制
+        const response = await fetch(selfDeployApiUrl, {
           method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            'Referer': 'https://vercel.app/',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            'Content-Type': 'application/json'
           }
         });
 
-        // 处理接口响应错误（全接口统一容错）
-        if (!response.ok) throw new Error(`接口请求失败，状态码：${response.status}`);
+        if (!response.ok) throw new Error(`后端接口请求失败，状态码：${response.status}`);
 
-        // 根据选择的格式，处理全接口返回内容
+        // 处理返回内容
         let content = '';
         if (format === 'json') {
           const data = await response.json();
-          content = JSON.stringify(data, null, 2); // 格式化 JSON，更易读
+          content = JSON.stringify(data, null, 2);
           contentBox.textContent = content;
         } else if (format === 'text') {
           content = await response.text();
           contentBox.textContent = content;
         } else if (format === 'markdown') {
           const mdText = await response.text();
-          // 解析 Markdown 并美化展示（适配全接口内容格式）
           contentBox.innerHTML = `
             <div class="prose prose-sm md:prose-lg max-w-none">
               ${mdText.replace(/\n/g, '<br>').replace(/# /g, '<h2 class="text-xl font-bold mb-2">').replace(/#/g, '</h2>')}
             </div>
           `;
         }
-
       } catch (error) {
-        // 全接口统一错误提示（小白易懂，提供解决方案）
         contentBox.textContent = `❌ 实时内容加载失败：${error.message}
-💡 原因可能：公共 API 临时维护/网络波动，刷新页面重试即可！
-💡 若持续失败，可切换其他接口尝试（如 60s 新闻/微博热搜）。`;
+💡 原因可能：后端部署未完成/第三方接口临时维护，刷新页面重试即可！
+💡 已解决跨域问题，部署完成后稳定可用。`;
       } finally {
-        // 隐藏加载状态
         loading.classList.add('hidden');
         loading.classList.remove('flex');
       }
