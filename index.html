@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>60s API 纯静态展示页面</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .content-box {
+      min-height: 400px;
+      white-space: pre-wrap;
+    }
+    .loading {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 md:p-8">
+    <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-6">60s API 纯静态展示</h1>
+
+    <div class="flex flex-col md:flex-row gap-4 mb-6">
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">选择内容</label>
+        <select id="data-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="weibo">微博热搜</option>
+          <option value="zhihu">知乎热搜</option>
+          <option value="epic">Epic 免费游戏</option>
+          <option value="maoyan">猫眼实时票房</option>
+        </select>
+      </div>
+
+      <div class="flex-1">
+        <label class="block text-sm font-medium text-gray-700 mb-1">展示格式</label>
+        <select id="format-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="json">JSON（原始数据）</option>
+          <option value="text">纯文本</option>
+          <option value="markdown">Markdown（美观展示）</option>
+        </select>
+      </div>
+
+      <div class="flex items-end">
+        <button id="refresh-btn" class="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          加载内容
+        </button>
+      </div>
+    </div>
+
+    <div id="loading" class="hidden justify-center items-center mb-4">
+      <svg class="w-6 h-6 text-blue-500 loading" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+      </svg>
+      <span class="ml-2 text-gray-600">加载中...</span>
+    </div>
+
+    <div class="border border-gray-300 rounded-md p-4 content-box bg-gray-50 text-gray-800 overflow-auto" id="content"></div>
+  </div>
+
+  <script>
+    // 内置模拟数据（无后端依赖，直接调用）
+    const mockData = {
+      weibo: {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { rank: 1, title: '微博热搜：某某明星新剧开播', hotValue: '120万+' },
+          { rank: 2, title: '微博热搜：全国多地气温骤降', hotValue: '98万+' },
+          { rank: 3, title: '微博热搜：某赛事中国队夺冠', hotValue: '86万+' }
+        ]
+      },
+      zhihu: {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { rank: 1, title: '知乎热搜：如何评价某某科技新品？', commentCount: '1.5万' },
+          { rank: 2, title: '知乎热搜：普通人如何提升理财能力？', commentCount: '9800' },
+          { rank: 3, title: '知乎热搜：当下职场内卷的本质是什么？', commentCount: '7600' }
+        ]
+      },
+      epic: {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { name: '《模拟农场2024》', status: '当前免费', endTime: '2026-02-15' },
+          { name: '《独立游戏合集》', status: '即将免费', startTime: '2026-02-16' }
+        ]
+      },
+      maoyan: {
+        code: 200,
+        updateTime: new Date().toLocaleString(),
+        data: [
+          { rank: 1, movieName: '《某某大片》', boxOffice: '6.8亿' },
+          { rank: 2, movieName: '《温情治愈片》', boxOffice: '3.5亿' },
+          { rank: 3, movieName: '《悬疑推理片》', boxOffice: '2.1亿' }
+        ]
+      }
+    };
+
+    // DOM 元素
+    const dataSelect = document.getElementById('data-select');
+    const formatSelect = document.getElementById('format-select');
+    const refreshBtn = document.getElementById('refresh-btn');
+    const loading = document.getElementById('loading');
+    const contentBox = document.getElementById('content');
+
+    // 绑定事件
+    refreshBtn.addEventListener('click', loadData);
+    window.onload = loadData;
+
+    // 核心：加载并格式化数据（无任何后端请求）
+    function loadData() {
+      // 显示加载状态
+      loading.classList.remove('hidden');
+      loading.classList.add('flex');
+      contentBox.innerHTML = '';
+
+      // 获取选择的内容和格式
+      const dataKey = dataSelect.value;
+      const format = formatSelect.value;
+      const data = mockData[dataKey];
+
+      // 模拟加载延迟（更真实）
+      setTimeout(() => {
+        let content = '';
+        switch (format) {
+          case 'json':
+            content = JSON.stringify(data, null, 2);
+            contentBox.textContent = content;
+            break;
+          case 'text':
+            content = `更新时间：${data.updateTime}\n\n`;
+            data.data.forEach(item => {
+              for (const key in item) {
+                content += `${key}：${item[key]}  `;
+              }
+              content += '\n';
+            });
+            contentBox.textContent = content;
+            break;
+          case 'markdown':
+            content = `# 数据展示（更新时间：${data.updateTime}）\n\n`;
+            content += '| 序号 | 核心内容 | 附加信息 |\n';
+            content += '| ---- | -------- | -------- |\n';
+            data.data.forEach((item, index) => {
+              const values = Object.values(item);
+              content += `| ${index+1} | ${values[1]} | ${values[2] || '无'} |\n`;
+            });
+            // 格式化 Markdown 展示
+            contentBox.innerHTML = `<div class="markdown-body">${content.replace(/\n/g, '<br>').replace(/\|/g, '<span class="px-2">|</span>').replace(/# /g, '<h2>').replace(/#/g, '</h2>')}</div>`;
+            break;
+        }
+
+        // 隐藏加载状态
+        loading.classList.add('hidden');
+        loading.classList.remove('flex');
+      }, 500);
+    }
+  </script>
+</body>
+</html>
